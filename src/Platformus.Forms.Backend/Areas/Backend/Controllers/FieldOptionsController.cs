@@ -2,14 +2,19 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using ExtCore.Data.Abstractions;
+using ExtCore.Events;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Platformus.Barebone;
 using Platformus.Forms.Backend.ViewModels.FieldOptions;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
+using Platformus.Forms.Events;
 
 namespace Platformus.Forms.Backend.Controllers
 {
   [Area("Backend")]
+  [Authorize(Policy = Policies.HasBrowseFormsPermission)]
   public class FieldOptionsController : Platformus.Globalization.Backend.Controllers.ControllerBase
   {
     public FieldOptionsController(IStorage storage)
@@ -40,7 +45,7 @@ namespace Platformus.Forms.Backend.Controllers
         else this.Storage.GetRepository<IFieldOptionRepository>().Edit(fieldOption);
 
         this.Storage.Save();
-        this.CacheForm(fieldOption);
+        Event<IFormEditedEventHandler, IRequestHandler, Form>.Broadcast(this, this.GetForm(fieldOption));
         return this.RedirectToAction("Index", "Forms");
       }
 
@@ -54,13 +59,8 @@ namespace Platformus.Forms.Backend.Controllers
 
       this.Storage.GetRepository<IFieldOptionRepository>().Delete(fieldOption);
       this.Storage.Save();
-      new CacheManager(this).CacheForm(form);
+      new SerializationManager(this).SerializeForm(form);
       return this.RedirectToAction("Index", "Forms");
-    }
-
-    private void CacheForm(FieldOption fieldOption)
-    {
-      new CacheManager(this).CacheForm(this.GetForm(fieldOption));
     }
 
     private Form GetForm(FieldOption fieldOption)

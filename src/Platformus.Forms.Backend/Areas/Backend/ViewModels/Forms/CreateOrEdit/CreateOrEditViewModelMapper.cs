@@ -3,15 +3,15 @@
 
 using Platformus.Barebone;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Globalization.Backend.ViewModels;
 
 namespace Platformus.Forms.Backend.ViewModels.Forms
 {
-  public class CreateOrEditViewModelMapper : ViewModelFactoryBase
+  public class CreateOrEditViewModelMapper : ViewModelMapperBase
   {
-    public CreateOrEditViewModelMapper(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelMapper(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -20,10 +20,12 @@ namespace Platformus.Forms.Backend.ViewModels.Forms
       Form form = new Form();
 
       if (createOrEdit.Id != null)
-        form = this.handler.Storage.GetRepository<IFormRepository>().WithKey((int)createOrEdit.Id);
+        form = this.RequestHandler.Storage.GetRepository<IFormRepository>().WithKey((int)createOrEdit.Id);
 
       form.Code = createOrEdit.Code;
-      form.Email = createOrEdit.Email;
+      form.ProduceCompletedForms = createOrEdit.ProduceCompletedForms;
+      form.CSharpClassName = createOrEdit.CSharpClassName;
+      form.Parameters = createOrEdit.Parameters;
       return form;
     }
   }

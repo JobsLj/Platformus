@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Authors>Dmitry Sikorsky</Authors>
+    <Copyright>Copyright © 2015 Dmitry Sikorsky</Copyright>
+    <Description>The Platformus.Menus extension component.</Description>
+    <VersionPrefix>1.0.0-beta5</VersionPrefix>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Platformus.Menus.Backend</AssemblyName>
+    <PackageId>Platformus.Menus.Backend</PackageId>
+    <PackageIconUrl>http://platformus.net/platformus_nuget_icon.png</PackageIconUrl>
+    <PackageProjectUrl>http://platformus.net/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Areas\Backend\Views\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Platformus.Globalization.Backend\Platformus.Globalization.Backend.csproj" />
+    <ProjectReference Include="..\Platformus.Menus\Platformus.Menus.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -4,15 +4,15 @@
 using System.Linq;
 using Platformus.Barebone;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Globalization.Backend.ViewModels;
 
 namespace Platformus.Forms.Backend.ViewModels.Shared
 {
   public class FormViewModelFactory : ViewModelFactoryBase
   {
-    public FormViewModelFactory(IHandler handler)
-      : base(handler)
+    public FormViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -22,8 +22,9 @@ namespace Platformus.Forms.Backend.ViewModels.Shared
       {
         Id = form.Id,
         Name = this.GetLocalizationValue(form.NameId),
-        Fields = this.handler.Storage.GetRepository<IFieldRepository>().FilteredByFormId(form.Id).Select(
-          f => new FieldViewModelFactory(this.handler).Create(f)
+        ProduceCompletedForms = form.ProduceCompletedForms,
+        Fields = this.RequestHandler.Storage.GetRepository<IFieldRepository>().FilteredByFormId(form.Id).ToList().Select(
+          f => new FieldViewModelFactory(this.RequestHandler).Create(f)
         )
       };
     }

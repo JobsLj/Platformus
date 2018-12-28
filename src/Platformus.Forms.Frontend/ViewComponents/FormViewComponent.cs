@@ -6,7 +6,7 @@ using ExtCore.Data.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 using Platformus.Barebone.Frontend.ViewComponents;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Forms.Frontend.ViewModels.Shared;
 using Platformus.Globalization;
 
@@ -19,23 +19,30 @@ namespace Platformus.Forms.Frontend.ViewComponents
     {
     }
 
-    public async Task<IViewComponentResult> InvokeAsync(string code)
+    public async Task<IViewComponentResult> InvokeAsync(string code, string partialViewName = null, string additionalCssClass = null)
     {
-      CachedForm cachedForm = this.Storage.GetRepository<ICachedFormRepository>().WithCultureIdAndCode(
-        CultureManager.GetCurrentCulture(this.Storage).Id, code
+      SerializedForm serializedForm = this.Storage.GetRepository<ISerializedFormRepository>().WithCultureIdAndCode(
+        this.GetService<ICultureManager>().GetCurrentCulture().Id, code
       );
 
-      if (cachedForm == null)
-      {
-        Form form = this.Storage.GetRepository<IFormRepository>().WithCode(code);
+      if (serializedForm == null)
+        return this.Content($"There is no form with code “{code}” defined.");
 
-        if (form == null)
-          return null;
+      return this.GetService<ICache>().GetFormViewComponentResultWithDefaultValue(
+        code, additionalCssClass, () => this.GetViewComponentResult(code, partialViewName, additionalCssClass)
+      );
+    }
 
-        return this.View(new FormViewModelFactory(this).Create(form));
-      }
+    private IViewComponentResult GetViewComponentResult(string code, string partialViewName = null, string additionalCssClass = null)
+    {
+      SerializedForm serializedForm = this.Storage.GetRepository<ISerializedFormRepository>().WithCultureIdAndCode(
+        this.GetService<ICultureManager>().GetCurrentCulture().Id, code
+      );
 
-      return this.View(new FormViewModelFactory(this).Create(cachedForm));
+      if (serializedForm == null)
+        return this.Content($"There is no form with code “{code}” defined.");
+
+      return this.View(new FormViewModelFactory(this).Create(serializedForm, partialViewName, additionalCssClass));
     }
   }
 }

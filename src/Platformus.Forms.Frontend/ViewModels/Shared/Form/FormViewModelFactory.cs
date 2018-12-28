@@ -5,45 +5,35 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Platformus.Barebone;
-using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Globalization.Frontend.ViewModels;
 
 namespace Platformus.Forms.Frontend.ViewModels.Shared
 {
   public class FormViewModelFactory : ViewModelFactoryBase
   {
-    public FormViewModelFactory(IHandler handler)
-      : base(handler)
+    public FormViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
-    public FormViewModel Create(Form form)
+    public FormViewModel Create(SerializedForm serializedForm, string partialViewName, string additionalCssClass)
     {
-      return new FormViewModel()
-      {
-        Id = form.Id,
-        Name = this.GetLocalizationValue(form.NameId),
-        Fields = this.handler.Storage.GetRepository<IFieldRepository>().FilteredByFormId(form.Id).Select(
-          f => new FieldViewModelFactory(this.handler).Create(f)
-        )
-      };
-    }
+      IEnumerable<SerializedField> serializedFields = new SerializedField[] { };
 
-    public FormViewModel Create(CachedForm cachedForm)
-    {
-      IEnumerable<CachedField> cachedFields = new CachedField[] { };
-
-      if (!string.IsNullOrEmpty(cachedForm.CachedFields))
-        cachedFields = JsonConvert.DeserializeObject<IEnumerable<CachedField>>(cachedForm.CachedFields);
+      if (!string.IsNullOrEmpty(serializedForm.SerializedFields))
+        serializedFields = JsonConvert.DeserializeObject<IEnumerable<SerializedField>>(serializedForm.SerializedFields);
 
       return new FormViewModel()
       {
-        Id = cachedForm.FormId,
-        Name = cachedForm.Name,
-        Fields = cachedFields.Select(
-          cf => new FieldViewModelFactory(this.handler).Create(cf)
-        )
+        Id = serializedForm.FormId,
+        Name = serializedForm.Name,
+        SubmitButtonTitle = serializedForm.SubmitButtonTitle,
+        Fields = serializedFields.Select(
+          sf => new FieldViewModelFactory(this.RequestHandler).Create(sf)
+        ).ToList(),
+        PartialViewName = partialViewName ?? "_Form",
+        AdditionalCssClass = additionalCssClass
       };
     }
   }

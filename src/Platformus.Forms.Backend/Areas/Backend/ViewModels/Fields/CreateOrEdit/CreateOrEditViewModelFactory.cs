@@ -5,17 +5,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Platformus.Barebone;
 using Platformus.Barebone.Backend;
+using Platformus.Barebone.Primitives;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Globalization.Backend.ViewModels;
-using Platformus.Globalization.Data.Abstractions;
 
 namespace Platformus.Forms.Backend.ViewModels.Fields
 {
   public class CreateOrEditViewModelFactory : ViewModelFactoryBase
   {
-    public CreateOrEditViewModelFactory(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -28,21 +28,24 @@ namespace Platformus.Forms.Backend.ViewModels.Fields
           NameLocalizations = this.GetLocalizations()
         };
 
-      Field field = this.handler.Storage.GetRepository<IFieldRepository>().WithKey((int)id);
+      Field field = this.RequestHandler.Storage.GetRepository<IFieldRepository>().WithKey((int)id);
 
       return new CreateOrEditViewModel()
       {
         Id = field.Id,
-        NameLocalizations = this.GetLocalizations(this.handler.Storage.GetRepository<IDictionaryRepository>().WithKey(field.NameId)),
         FieldTypeId = field.FieldTypeId,
         FieldTypeOptions = this.GetFieldTypeOptions(),
+        Code = field.Code,
+        NameLocalizations = this.GetLocalizations(field.NameId),
+        IsRequired = field.IsRequired,
+        MaxLength = field.MaxLength,
         Position = field.Position
       };
     }
 
     private IEnumerable<Option> GetFieldTypeOptions()
     {
-      return this.handler.Storage.GetRepository<IFieldTypeRepository>().All().Select(
+      return this.RequestHandler.Storage.GetRepository<IFieldTypeRepository>().All().ToList().Select(
         ft => new Option(ft.Name, ft.Id.ToString())
       );
     }

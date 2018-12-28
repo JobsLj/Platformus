@@ -5,14 +5,14 @@ using System;
 using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
 using Platformus.Security.Data.Abstractions;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Users
 {
-  public class CreateOrEditViewModelMapper : ViewModelFactoryBase
+  public class CreateOrEditViewModelMapper : ViewModelMapperBase
   {
-    public CreateOrEditViewModelMapper(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelMapper(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -21,9 +21,9 @@ namespace Platformus.Security.Backend.ViewModels.Users
       User user = new User();
 
       if (createOrEdit.Id != null)
-        user = this.handler.Storage.GetRepository<IUserRepository>().WithKey((int)createOrEdit.Id);
+        user = this.RequestHandler.Storage.GetRepository<IUserRepository>().WithKey((int)createOrEdit.Id);
 
-      else user.Created = DateTime.Now.ToUnixTimestamp();
+      else user.Created = DateTime.Now;
 
       user.Name = createOrEdit.Name;
       return user;

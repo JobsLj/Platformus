@@ -5,22 +5,22 @@ using System.Collections.Generic;
 using System.Linq;
 using Platformus.Barebone;
 using Platformus.Globalization.Data.Abstractions;
-using Platformus.Globalization.Data.Models;
+using Platformus.Globalization.Data.Entities;
 
 namespace Platformus.Globalization.Backend.ViewModels
 {
   public abstract class ViewModelFactoryBase : Platformus.Barebone.Backend.ViewModels.ViewModelFactoryBase
   {
-    public ViewModelFactoryBase(IHandler handler)
-      : base(handler)
+    public ViewModelFactoryBase(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
-      this.handler = handler;
+      this.RequestHandler = requestHandler;
     }
 
     public string GetLocalizationValue(int dictionaryId)
     {
-      Localization localization = this.handler.Storage.GetRepository<ILocalizationRepository>().WithDictionaryIdAndCultureId(
-        dictionaryId, CultureManager.GetCurrentCulture(this.handler.Storage).Id
+      Localization localization = this.RequestHandler.Storage.GetRepository<ILocalizationRepository>().WithDictionaryIdAndCultureId(
+        dictionaryId, this.RequestHandler.GetService<ICultureManager>().GetCurrentCulture().Id
       );
 
       if (localization == null)
@@ -29,20 +29,20 @@ namespace Platformus.Globalization.Backend.ViewModels
       return localization.Value;
     }
 
-    protected IEnumerable<Platformus.Barebone.Backend.Localization> GetLocalizations(Dictionary dictionary = null)
+    protected IEnumerable<Platformus.Barebone.Primitives.Localization> GetLocalizations(int? dictionaryId = null)
     {
-      List<Platformus.Barebone.Backend.Localization> localizations = new List<Platformus.Barebone.Backend.Localization>();
+      List<Platformus.Barebone.Primitives.Localization> localizations = new List<Platformus.Barebone.Primitives.Localization>();
 
-      foreach (Platformus.Globalization.Data.Models.Culture culture in this.handler.Storage.GetRepository<ICultureRepository>().All())
+      foreach (Platformus.Globalization.Data.Entities.Culture culture in this.RequestHandler.Storage.GetRepository<ICultureRepository>().All().ToList())
       {
-        Platformus.Globalization.Data.Models.Localization localization = null;
+        Platformus.Globalization.Data.Entities.Localization localization = null;
 
-        if (dictionary != null)
-          localization = this.handler.Storage.GetRepository<ILocalizationRepository>().FilteredByDictionaryId(dictionary.Id).FirstOrDefault(l => l.CultureId == culture.Id);
+        if (dictionaryId != null)
+          localization = this.RequestHandler.Storage.GetRepository<ILocalizationRepository>().FilteredByDictionaryId((int)dictionaryId).FirstOrDefault(l => l.CultureId == culture.Id);
 
         localizations.Add(
-          new Platformus.Barebone.Backend.Localization(
-            new Platformus.Barebone.Backend.Culture(culture.Code),
+          new Platformus.Barebone.Primitives.Localization(
+            new Platformus.Barebone.Primitives.Culture(culture.Code),
             localization == null ? null : localization.Value
           )
         );

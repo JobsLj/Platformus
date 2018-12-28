@@ -6,12 +6,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using ExtCore.Data.Abstractions;
-using ExtCore.Data.Models.Abstractions;
+using ExtCore.Data.Entities.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Platformus.Globalization.Backend.ViewModels;
 using Platformus.Globalization.Data.Abstractions;
-using Platformus.Globalization.Data.Models;
+using Platformus.Globalization.Data.Entities;
 
 namespace Platformus.Globalization.Backend.Controllers
 {
@@ -47,10 +47,10 @@ namespace Platformus.Globalization.Backend.Controllers
     private Dictionary GetOrCreateDictionaryForProperty(IEntity entity, PropertyInfo propertyInfo)
     {
       PropertyInfo dictionaryIdPropertyInfo = entity.GetType().GetProperty(propertyInfo.Name + "Id");
-      int dictionaryId = (int)dictionaryIdPropertyInfo.GetValue(entity);
+      int? dictionaryId = (int?)dictionaryIdPropertyInfo.GetValue(entity);
       Dictionary dictionary = null;
 
-      if (dictionaryId == 0)
+      if (dictionaryId == null || dictionaryId == 0)
       {
         dictionary = new Dictionary();
         this.Storage.GetRepository<IDictionaryRepository>().Create(dictionary);
@@ -58,7 +58,7 @@ namespace Platformus.Globalization.Backend.Controllers
         dictionaryIdPropertyInfo.SetValue(entity, dictionary.Id);
       }
 
-      else dictionary = this.Storage.GetRepository<IDictionaryRepository>().WithKey(dictionaryId);
+      else dictionary = this.Storage.GetRepository<IDictionaryRepository>().WithKey((int)dictionaryId);
 
       return dictionary;
     }
@@ -73,9 +73,7 @@ namespace Platformus.Globalization.Backend.Controllers
 
     private void CreateLocalizations(PropertyInfo propertyInfo, Dictionary dictionary)
     {
-      IEnumerable<Culture> cultures = this.Storage.GetRepository<ICultureRepository>().NotNeutral();
-
-      foreach (Culture culture in cultures)
+      foreach (Culture culture in this.GetService<ICultureManager>().GetNotNeutralCultures())
       {
         Localization localization = new Localization();
 
@@ -101,15 +99,13 @@ namespace Platformus.Globalization.Backend.Controllers
 
       try
       {
-        IEnumerable<Culture> cultures = this.Storage.GetRepository<ICultureRepository>().NotNeutral();
-
         foreach (PropertyInfo propertyInfo in this.GetMultilingualPropertiesFromViewModel(viewModel))
         {
           this.ModelState.Remove(propertyInfo.Name);
 
           bool hasRequiredAttribute = propertyInfo.CustomAttributes.Any(ca => ca.AttributeType == typeof(RequiredAttribute));
 
-          foreach (Culture culture in cultures)
+          foreach (Culture culture in this.GetService<ICultureManager>().GetNotNeutralCultures())
           {
             string identity = propertyInfo.Name + culture.Code;
             string value = this.Request.Form[identity];
@@ -132,10 +128,11 @@ namespace Platformus.Globalization.Backend.Controllers
 
     private ViewModelBase GetViewModelFromActionExecutingContext(ActionExecutingContext actionExecutingContext)
     {
-      if (!actionExecutingContext.ActionArguments.ContainsKey("createOrEdit"))
-        return null;
+      foreach (KeyValuePair<string, object> actionArgument in actionExecutingContext.ActionArguments)
+        if (actionArgument.Value is ViewModelBase)
+          return actionArgument.Value as ViewModelBase;
 
-      return actionExecutingContext.ActionArguments["createOrEdit"] as ViewModelBase;
+      return null;
     }
 
     private IEnumerable<PropertyInfo> GetMultilingualPropertiesFromViewModel(ViewModelBase viewModel)

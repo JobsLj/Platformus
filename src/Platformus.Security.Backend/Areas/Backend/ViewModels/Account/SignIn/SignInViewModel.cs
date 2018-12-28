@@ -8,7 +8,7 @@ namespace Platformus.Security.Backend.ViewModels.Account
 {
   public class SignInViewModel : ViewModelBase
   {
-    public int? Id { get; set; }
+    public string Next { get; set; }
 
     [Display(Name = "Email")]
     [Required]
@@ -19,5 +19,8 @@ namespace Platformus.Security.Backend.ViewModels.Account
     [Required]
     [StringLength(64)]
     public string Password { get; set; }
+
+    [Display(Name = "Remember me")]
+    public bool RememberMe { get; set; }
   }
 }

@@ -3,14 +3,14 @@
 
 using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Shared
 {
   public class RoleViewModelFactory : ViewModelFactoryBase
   {
-    public RoleViewModelFactory(IHandler handler)
-      : base(handler)
+    public RoleViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 

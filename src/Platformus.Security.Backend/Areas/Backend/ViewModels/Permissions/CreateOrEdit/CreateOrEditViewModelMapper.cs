@@ -4,14 +4,14 @@
 using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
 using Platformus.Security.Data.Abstractions;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Permissions
 {
-  public class CreateOrEditViewModelMapper : ViewModelFactoryBase
+  public class CreateOrEditViewModelMapper : ViewModelMapperBase
   {
-    public CreateOrEditViewModelMapper(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelMapper(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -20,7 +20,7 @@ namespace Platformus.Security.Backend.ViewModels.Permissions
       Permission permission = new Permission();
 
       if (createOrEdit.Id != null)
-        permission = this.handler.Storage.GetRepository<IPermissionRepository>().WithKey((int)createOrEdit.Id);
+        permission = this.RequestHandler.Storage.GetRepository<IPermissionRepository>().WithKey((int)createOrEdit.Id);
 
       permission.Code = createOrEdit.Code;
       permission.Name = createOrEdit.Name;

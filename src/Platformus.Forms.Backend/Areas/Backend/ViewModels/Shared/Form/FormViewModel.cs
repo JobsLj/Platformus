@@ -10,6 +10,7 @@ namespace Platformus.Forms.Backend.ViewModels.Shared
   {
     public int Id { get; set; }
     public string Name { get; set; }
+    public bool ProduceCompletedForms { get; set; }
     public IEnumerable<FieldViewModel> Fields { get; set; }
   }
 }

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Authors>Dmitry Sikorsky</Authors>
+    <Copyright>Copyright © 2015 Dmitry Sikorsky</Copyright>
+    <Description>The Platformus.Configurations extension component.</Description>
+    <VersionPrefix>1.0.0-beta5</VersionPrefix>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Platformus.Configurations.Backend</AssemblyName>
+    <PackageId>Platformus.Configurations.Backend</PackageId>
+    <PackageIconUrl>http://platformus.net/platformus_nuget_icon.png</PackageIconUrl>
+    <PackageProjectUrl>http://platformus.net/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Areas\Backend\Views\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Platformus.Barebone.Backend\Platformus.Barebone.Backend.csproj" />
+    <ProjectReference Include="..\Platformus.Configurations\Platformus.Configurations.csproj" />
+  </ItemGroup>
+
+</Project>

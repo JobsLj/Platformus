@@ -1,102 +1,117 @@
 ﻿// Copyright © 2015 Dmitry Sikorsky. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Linq;
-using System.Text;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using ExtCore.Data.Abstractions;
-using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using MimeKit;
-using Platformus.Configuration;
+using Platformus.Barebone;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
-using Platformus.Globalization.Data.Abstractions;
+using Platformus.Forms.Data.Entities;
+using Platformus.Forms.FormHandlers;
 
 namespace Platformus.Forms.Frontend.Controllers
 {
   [AllowAnonymous]
   public class FormsController : Platformus.Barebone.Frontend.Controllers.ControllerBase
   {
-    private IConfigurationRoot configurationRoot;
-
     public FormsController(IStorage storage)
       : base(storage)
     {
-      IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddStorage(storage);
-
-      this.configurationRoot = configurationBuilder.Build();
     }
 
     [HttpPost]
-    public IActionResult Send()
+    public IActionResult Send(int formId, string formPageUrl)
     {
-      StringBuilder body = new StringBuilder();
-      Form form = this.Storage.GetRepository<IFormRepository>().WithKey(int.Parse(this.Request.Form["formId"]));
+      Form form = this.Storage.GetRepository<IFormRepository>().WithKey(formId);
+      IDictionary<Field, string> valuesByFields = this.GetValuesByFields(form);
+      IDictionary<string, byte[]> attachmentsByFilenames = this.GetAttachmentsByFilenames(form);
+
+      if (form.ProduceCompletedForms)
+        this.ProduceCompletedForms(form, valuesByFields, attachmentsByFilenames);
+
+      IFormHandler formHandler = StringActivator.CreateInstance<IFormHandler>(form.CSharpClassName);
+
+      if (formHandler != null)
+        return formHandler.Handle(this, form, valuesByFields, attachmentsByFilenames, formPageUrl);
+
+      return this.NotFound();
+    }
+
+    private IDictionary<Field, string> GetValuesByFields(Form form)
+    {
+      IDictionary<Field, string> valuesByFields = new Dictionary<Field, string>();
 
       foreach (Field field in this.Storage.GetRepository<IFieldRepository>().FilteredByFormId(form.Id))
       {
-        string value = this.Request.Form[string.Format("field{0}", field.Id)];
+        FieldType fieldType = this.Storage.GetRepository<IFieldTypeRepository>().WithKey(field.FieldTypeId);
 
-        // TODO: change the way the localized value is retrieved
-        body.AppendFormat(
-          "<p>{0}: {1}</p>",
-          this.Storage.GetRepository<ILocalizationRepository>().FilteredByDictionaryId(field.NameId).First().Value,
-          value
-        );
+        if (fieldType.Code != "FileUpload")
+          valuesByFields.Add(field, this.Request.Form[string.Format("field{0}", field.Code)]);
       }
 
-      this.SendEmail(form, body.ToString());
-
-      // TODO: add RedirectUrl property to the Form class
-      string referer = this.Request.Headers["Referer"];
-
-      if (string.IsNullOrEmpty(referer))
-        referer = "/";
-
-      return this.Redirect(referer);
+      return valuesByFields;
     }
 
-    // TODO: we shouldn't use MailKit directly, need to replace with the service instead
-    private void SendEmail(Form form, string body)
+    private IDictionary<string, byte[]> GetAttachmentsByFilenames(Form form)
     {
-      string smtpServer = this.configurationRoot["Email:SmtpServer"];
-      string smtpPort = this.configurationRoot["Email:SmtpPort"];
-      string smtpLogin = this.configurationRoot["Email:SmtpLogin"];
-      string smtpPassword = this.configurationRoot["Email:SmtpPassword"];
-      string smtpSenderEmail = this.configurationRoot["Email:SmtpSenderEmail"];
-      string smtpSenderName = this.configurationRoot["Email:SmtpSenderName"];
+      IDictionary<string, byte[]> attachmentsByFilenames = new Dictionary<string, byte[]>();
 
-      if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpPort) || string.IsNullOrEmpty(smtpLogin) || string.IsNullOrEmpty(smtpPassword))
-        return;
-
-      MimeMessage message = new MimeMessage();
-
-      message.From.Add(new MailboxAddress(smtpSenderName, smtpSenderEmail));
-      message.To.Add(new MailboxAddress(form.Email, form.Email));
-
-      // TODO: change the way the localized name is retrieved
-      message.Subject = string.Format("{0} form data", this.Storage.GetRepository<ILocalizationRepository>().FilteredByDictionaryId(form.NameId).First().Value);
-
-      BodyBuilder bodyBuilder = new BodyBuilder();
-
-      bodyBuilder.HtmlBody = body;
-      message.Body = bodyBuilder.ToMessageBody();
-
-      try
+      foreach (Field field in this.Storage.GetRepository<IFieldRepository>().FilteredByFormId(form.Id))
       {
-        using (SmtpClient smtpClient = new SmtpClient())
+        FieldType fieldType = this.Storage.GetRepository<IFieldTypeRepository>().WithKey(field.FieldTypeId);
+
+        if (fieldType.Code == "FileUpload")
         {
-          smtpClient.Connect(smtpServer, int.Parse(smtpPort), false);
-          smtpClient.AuthenticationMechanisms.Remove("XOAUTH2");
-          smtpClient.Authenticate(smtpLogin, smtpPassword);
-          smtpClient.Send(message);
-          smtpClient.Disconnect(true);
+          IFormFile file = this.Request.Form.Files[string.Format("field{0}", field.Code)];
+
+          if (file != null && !string.IsNullOrEmpty(file.FileName))
+          {
+            string filename = file.FileName;
+
+            if (!string.IsNullOrEmpty(filename) && filename.Contains(Path.DirectorySeparatorChar.ToString()))
+              filename = Path.GetFileName(filename);
+
+            attachmentsByFilenames.Add(filename, this.GetBytesFromStream(file.OpenReadStream()));
+          }
         }
       }
 
-      catch { }
+      return attachmentsByFilenames;
+    }
+
+    private void ProduceCompletedForms(Form form, IDictionary<Field, string> valuesByFields, IDictionary<string, byte[]> attachmentsByFilenames)
+    {
+      CompletedForm completedForm = new CompletedForm();
+
+      completedForm.FormId = form.Id;
+      completedForm.Created = DateTime.Now;
+      this.Storage.GetRepository<ICompletedFormRepository>().Create(completedForm);
+      this.Storage.Save();
+
+      foreach (KeyValuePair<Field, string> valueByField in valuesByFields)
+      {
+        CompletedField completedField = new CompletedField();
+
+        completedField.CompletedFormId = completedForm.Id;
+        completedField.FieldId = valueByField.Key.Id;
+        completedField.Value = valueByField.Value;
+        this.Storage.GetRepository<ICompletedFieldRepository>().Create(completedField);
+      }
+
+      this.Storage.Save();
+    }
+
+    private byte[] GetBytesFromStream(Stream input)
+    {
+      using (MemoryStream output = new MemoryStream())
+      {
+        input.CopyTo(output);
+        return output.ToArray();
+      }
     }
   }
 }

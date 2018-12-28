@@ -3,14 +3,14 @@
 
 using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Shared
 {
   public class UserViewModelFactory : ViewModelFactoryBase
   {
-    public UserViewModelFactory(IHandler handler)
-      : base(handler)
+    public UserViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -20,7 +20,7 @@ namespace Platformus.Security.Backend.ViewModels.Shared
       {
         Id = user.Id,
         Name = user.Name,
-        Created = user.Created.ToDateTime()
+        Created = user.Created
       };
     }
   }

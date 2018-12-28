@@ -2,14 +2,19 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using ExtCore.Data.Abstractions;
+using ExtCore.Events;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Platformus.Barebone;
 using Platformus.Forms.Backend.ViewModels.Fields;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
+using Platformus.Forms.Events;
 
 namespace Platformus.Forms.Backend.Controllers
 {
   [Area("Backend")]
+  [Authorize(Policy = Policies.HasBrowseFormsPermission)]
   public class FieldsController : Platformus.Globalization.Backend.Controllers.ControllerBase
   {
     public FieldsController(IStorage storage)
@@ -28,6 +33,9 @@ namespace Platformus.Forms.Backend.Controllers
     [ExportModelStateToTempData]
     public IActionResult CreateOrEdit(CreateOrEditViewModel createOrEdit)
     {
+      if (createOrEdit.Id == null && !this.IsCodeUnique(createOrEdit.FormId, createOrEdit.Code))
+        this.ModelState.AddModelError("code", string.Empty);
+
       if (this.ModelState.IsValid)
       {
         Field field = new CreateOrEditViewModelMapper(this).Map(createOrEdit);
@@ -40,7 +48,7 @@ namespace Platformus.Forms.Backend.Controllers
         else this.Storage.GetRepository<IFieldRepository>().Edit(field);
 
         this.Storage.Save();
-        this.CacheForm(field);
+        Event<IFormEditedEventHandler, IRequestHandler, Form>.Broadcast(this, this.GetForm(field));
         return this.RedirectToAction("Index", "Forms");
       }
 
@@ -54,13 +62,13 @@ namespace Platformus.Forms.Backend.Controllers
 
       this.Storage.GetRepository<IFieldRepository>().Delete(field);
       this.Storage.Save();
-      new CacheManager(this).CacheForm(form);
+      new SerializationManager(this).SerializeForm(form);
       return this.RedirectToAction("Index", "Forms");
     }
 
-    private void CacheForm(Field field)
+    private bool IsCodeUnique(int formId, string code)
     {
-      new CacheManager(this).CacheForm(this.GetForm(field));
+      return this.Storage.GetRepository<IFieldRepository>().WithFormIdAndCode(formId, code) == null;
     }
 
     private Form GetForm(Field field)

@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Authors>Dmitry Sikorsky</Authors>
+    <Copyright>Copyright © 2015 Dmitry Sikorsky</Copyright>
+    <Description>The Platformus.FileManager extension component.</Description>
+    <VersionPrefix>1.0.0-beta5</VersionPrefix>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Platformus.FileManager.Backend</AssemblyName>
+    <PackageId>Platformus.FileManager.Backend</PackageId>
+    <PackageIconUrl>http://platformus.net/platformus_nuget_icon.png</PackageIconUrl>
+    <PackageProjectUrl>http://platformus.net/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Areas\Backend\Views\**;wwwroot\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Platformus.Barebone.Backend\Platformus.Barebone.Backend.csproj" />
+    <ProjectReference Include="..\Platformus.FileManager\Platformus.FileManager.csproj" />
+  </ItemGroup>
+
+  <Target Name="PrecompileScript" BeforeTargets="BeforeBuild">
+    <Exec Command="dotnet bundle" />
+  </Target>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="BundlerMinifier.Core" Version="2.6.375" />
+  </ItemGroup>
+
+</Project>

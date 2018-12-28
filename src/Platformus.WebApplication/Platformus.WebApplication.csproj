@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Authors>Dmitry Sikorsky</Authors>
+    <Copyright>Copyright © 2015 Dmitry Sikorsky</Copyright>
+    <Description>Free, open source and cross-platform CMS based on ASP.NET Core and ExtCore framework.</Description>
+    <VersionPrefix>1.0.0-beta5</VersionPrefix>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Platformus.WebApplication</AssemblyName>
+    <PackageId>Platformus.WebApplication</PackageId>
+    <PackageIconUrl>http://platformus.net/platformus_nuget_icon.png</PackageIconUrl>
+    <PackageProjectUrl>http://platformus.net/</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ExtCore.Data" Version="4.0.0-alpha2" />
+    <PackageReference Include="ExtCore.Data.EntityFramework" Version="4.0.0-alpha2" />
+    <PackageReference Include="ExtCore.WebApplication" Version="4.0.0-alpha2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Platformus.Barebone.Backend\Platformus.Barebone.Backend.csproj" />
+    <ProjectReference Include="..\Platformus.Barebone.Data.Extensions\Platformus.Barebone.Data.Extensions.csproj" />
+    <ProjectReference Include="..\Platformus.Barebone.Frontend\Platformus.Barebone.Frontend.csproj" />
+  </ItemGroup>
+
+</Project>

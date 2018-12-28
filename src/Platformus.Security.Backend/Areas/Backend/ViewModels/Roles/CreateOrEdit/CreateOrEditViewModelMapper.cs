@@ -4,14 +4,14 @@
 using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
 using Platformus.Security.Data.Abstractions;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Roles
 {
-  public class CreateOrEditViewModelMapper : ViewModelFactoryBase
+  public class CreateOrEditViewModelMapper : ViewModelMapperBase
   {
-    public CreateOrEditViewModelMapper(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelMapper(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -20,7 +20,7 @@ namespace Platformus.Security.Backend.ViewModels.Roles
       Role role = new Role();
 
       if (createOrEdit.Id != null)
-        role = this.handler.Storage.GetRepository<IRoleRepository>().WithKey((int)createOrEdit.Id);
+        role = this.RequestHandler.Storage.GetRepository<IRoleRepository>().WithKey((int)createOrEdit.Id);
 
       role.Code = createOrEdit.Code;
       role.Name = createOrEdit.Name;

@@ -8,8 +8,8 @@ namespace Platformus.Barebone.Backend.ViewModels.Shared
 {
   public class GridViewModelFactory : ViewModelFactoryBase
   {
-    public GridViewModelFactory(IHandler handler)
-      : base(handler)
+    public GridViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -19,15 +19,20 @@ namespace Platformus.Barebone.Backend.ViewModels.Shared
       {
         OrderBy = orderBy,
         Direction = direction,
-        Pager = new PagerViewModelFactory(this.handler).Create(skip, take, total),
-        TakeSelector = new TakeSelectorViewModelFactory(this.handler).Create(take),
-        Filter = new FilterViewModelFactory(this.handler).Create(null),
+        Pager = new PagerViewModelFactory(this.RequestHandler).Create(skip, take, total),
+        TakeSelector = new TakeSelectorViewModelFactory(this.RequestHandler).Create(take),
+        // TODO: replace with the parameter
+        Filter = new FilterViewModelFactory(this.RequestHandler).Create(this.RequestHandler.HttpContext.Request.Query["filter"]),
         GridColumns = gridColumns,
         Items = items,
         TemplateName = templateName
       };
 
       gridColumns.ToList().ForEach(gc => gc.Owner = grid);
+
+      if (gridColumns.Count() != 0)
+        gridColumns.ToList().Last().IsLast = true;
+
       return grid;
     }
   }

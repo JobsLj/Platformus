@@ -7,14 +7,14 @@ using Platformus.Barebone;
 using Platformus.Barebone.Backend.ViewModels;
 using Platformus.Security.Backend.ViewModels.Shared;
 using Platformus.Security.Data.Abstractions;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.ViewModels.Users
 {
   public class CreateOrEditViewModelFactory : ViewModelFactoryBase
   {
-    public CreateOrEditViewModelFactory(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -26,7 +26,7 @@ namespace Platformus.Security.Backend.ViewModels.Users
           UserRoles = this.GetUserRoles()
         };
 
-      User user = this.handler.Storage.GetRepository<IUserRepository>().WithKey((int)id);
+      User user = this.RequestHandler.Storage.GetRepository<IUserRepository>().WithKey((int)id);
 
       return new CreateOrEditViewModel()
       {
@@ -38,8 +38,8 @@ namespace Platformus.Security.Backend.ViewModels.Users
 
     public IEnumerable<UserRoleViewModel> GetUserRoles(User user = null)
     {
-      return this.handler.Storage.GetRepository<IRoleRepository>().All().Select(
-        r => new UserRoleViewModelFactory(this.handler).Create(user, r)
+      return this.RequestHandler.Storage.GetRepository<IRoleRepository>().All().Select(
+        r => new UserRoleViewModelFactory(this.RequestHandler).Create(user, r)
       );
     }
   }

@@ -3,43 +3,73 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using ExtCore.Data.EntityFramework.Sqlite;
+using ExtCore.Data.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 
 namespace Platformus.Forms.Data.EntityFramework.Sqlite
 {
+  /// <summary>
+  /// Implements the <see cref="IFieldOptionRepository"/> interface and represents the repository
+  /// for manipulating the <see cref="FieldOption"/> entities in the context of SQLite database.
+  /// </summary>
   public class FieldOptionRepository : RepositoryBase<FieldOption>, IFieldOptionRepository
   {
+    /// <summary>
+    /// Gets the field option by the identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the field option.</param>
+    /// <returns>Found field option with the given identifier.</returns>
     public FieldOption WithKey(int id)
     {
-      return this.dbSet.FirstOrDefault(fo => fo.Id == id);
+      return this.dbSet.Find(id);
     }
 
+    /// <summary>
+    /// Gets the field options filtered by the field identifier using sorting by position (ascending).
+    /// </summary>
+    /// <param name="fieldId">The unique identifier of the field these field options belongs to.</param>
+    /// <returns>Found field options.</returns>
     public IEnumerable<FieldOption> FilteredByFieldId(int fieldId)
     {
-      return this.dbSet.Where(fo => fo.FieldId == fieldId).OrderBy(fo => fo.Position);
+      return this.dbSet.AsNoTracking().Where(fo => fo.FieldId == fieldId).OrderBy(fo => fo.Position);
     }
 
+    /// <summary>
+    /// Creates the field option.
+    /// </summary>
+    /// <param name="fieldOption">The field option to create.</param>
     public void Create(FieldOption fieldOption)
     {
       this.dbSet.Add(fieldOption);
     }
 
+    /// <summary>
+    /// Edits the field option.
+    /// </summary>
+    /// <param name="fieldOption">The field option to edit.</param>
     public void Edit(FieldOption fieldOption)
     {
-      this.dbContext.Entry(fieldOption).State = EntityState.Modified;
+      this.storageContext.Entry(fieldOption).State = EntityState.Modified;
     }
 
+    /// <summary>
+    /// Deletes the field option specified by the identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the field option to delete.</param>
     public void Delete(int id)
     {
       this.Delete(this.WithKey(id));
     }
 
+    /// <summary>
+    /// Deletes the field option.
+    /// </summary>
+    /// <param name="fieldOption">The field option to delete.</param>
     public void Delete(FieldOption fieldOption)
     {
-      this.dbContext.Database.ExecuteSqlCommand(
+      this.storageContext.Database.ExecuteSqlCommand(
         @"
           CREATE TEMP TABLE TempDictionaries (Id INT PRIMARY KEY);
           INSERT INTO TempDictionaries SELECT ValueId FROM FieldOptions WHERE Id = {0};

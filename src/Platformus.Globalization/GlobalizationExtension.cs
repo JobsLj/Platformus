@@ -1,110 +1,33 @@
 ﻿// Copyright © 2015 Dmitry Sikorsky. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using ExtCore.Data.Abstractions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.DependencyInjection;
-using Platformus.Globalization.Data.Models;
-using Platformus.Infrastructure;
+using ExtCore.Infrastructure;
 
 namespace Platformus.Globalization
 {
+  /// <summary>
+  /// Overrides the <see cref="ExtensionBase">ExtensionBase</see> class and provides the Platformus.Globalization extension information.
+  /// </summary>
   public class GlobalizationExtension : ExtensionBase
   {
-    public override IEnumerable<KeyValuePair<int, Action<IServiceCollection>>> ConfigureServicesActionsByPriorities
-    {
-      get
-      {
-        return new Dictionary<int, Action<IServiceCollection>>()
-        {
-          [3000] = services =>
-          {
-            services.AddLocalization(
-              localizationOptions =>
-              {
-                localizationOptions.ResourcesPath = "Resources";
-              }
-            );
-          }
-        };
-      }
-    }
+    /// <summary>
+    /// Gets the name of the extension.
+    /// </summary>
+    public override string Name => "Platformus.Globalization";
 
-    public override IEnumerable<KeyValuePair<int, Action<IMvcBuilder>>> AddMvcActionsByPriorities
-    {
-      get
-      {
-        return new Dictionary<int, Action<IMvcBuilder>>()
-        {
-          [3000] = mvcBuilder =>
-          {
-            mvcBuilder
-              .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
-              .AddDataAnnotationsLocalization();
-          }
-        };
-      }
-    }
+    /// <summary>
+    /// Gets the URL of the extension.
+    /// </summary>
+    public override string Url => "http://platformus.net/";
 
-    public override IEnumerable<KeyValuePair<int, Action<IApplicationBuilder>>> ConfigureActionsByPriorities
-    {
-      get
-      {
-        return new Dictionary<int, Action<IApplicationBuilder>>()
-        {
-          [3000] = applicationBuilder =>
-          {
-            RequestLocalizationOptions requestLocalizationOptions = new RequestLocalizationOptions();
-            IStorage storage = this.serviceProvider.GetService<IStorage>();
+    /// <summary>
+    /// Gets the version of the extension.
+    /// </summary>
+    public override string Version => "1.0.0-beta5";
 
-            if (storage == null)
-            {
-              requestLocalizationOptions.DefaultRequestCulture = new RequestCulture("en");
-              requestLocalizationOptions.SupportedCultures = requestLocalizationOptions.SupportedUICultures =
-                new CultureInfo[] { new CultureInfo("en") }.ToList();
-            }
-
-            else
-            {
-              Culture defaultCulture = CultureManager.GetDefaultCulture(storage);
-
-              if (defaultCulture == null)
-                requestLocalizationOptions.DefaultRequestCulture = new RequestCulture("en");
-
-              else requestLocalizationOptions.DefaultRequestCulture = new RequestCulture(defaultCulture.Code);
-
-              if (CultureManager.GetCultures(storage).Count() == 0)
-              {
-                requestLocalizationOptions.SupportedCultures = requestLocalizationOptions.SupportedUICultures =
-                  new CultureInfo[] { new CultureInfo("en") }.ToList();
-              }
-
-              else
-              {
-                requestLocalizationOptions.SupportedCultures = requestLocalizationOptions.SupportedUICultures =
-                  CultureManager.GetNotNeutralCultures(storage).Select(c => new CultureInfo(c.Code)).ToList();
-              }
-            }
-
-            requestLocalizationOptions.RequestCultureProviders.Insert(0, new RouteValueRequestCultureProvider(this.serviceProvider));
-            applicationBuilder.UseRequestLocalization(requestLocalizationOptions);
-          }
-        };
-      }
-    }
-
-    public override IBackendMetadata BackendMetadata
-    {
-      get
-      {
-        return new BackendMetadata();
-      }
-    }
+    /// <summary>
+    /// Gets the authors of the extension (separated by commas).
+    /// </summary>
+    public override string Authors => "Dmitry Sikorsky";
   }
 }

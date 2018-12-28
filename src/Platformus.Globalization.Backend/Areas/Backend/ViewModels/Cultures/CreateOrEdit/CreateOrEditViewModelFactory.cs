@@ -3,14 +3,14 @@
 
 using Platformus.Barebone;
 using Platformus.Globalization.Data.Abstractions;
-using Platformus.Globalization.Data.Models;
+using Platformus.Globalization.Data.Entities;
 
 namespace Platformus.Globalization.Backend.ViewModels.Cultures
 {
   public class CreateOrEditViewModelFactory : ViewModelFactoryBase
   {
-    public CreateOrEditViewModelFactory(IHandler handler)
-      : base(handler)
+    public CreateOrEditViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
@@ -21,14 +21,15 @@ namespace Platformus.Globalization.Backend.ViewModels.Cultures
         {
         };
 
-      Culture culture = this.handler.Storage.GetRepository<ICultureRepository>().WithKey((int)id);
+      Culture culture = this.RequestHandler.Storage.GetRepository<ICultureRepository>().WithKey((int)id);
 
       return new CreateOrEditViewModel()
       {
         Id = culture.Id,
         Code = culture.Code,
         Name = culture.Name,
-        IsDefault = culture.IsDefault
+        IsFrontendDefault = culture.IsFrontendDefault,
+        IsBackendDefault = culture.IsBackendDefault
       };
     }
   }

@@ -2,14 +2,16 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using ExtCore.Data.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platformus.Security.Backend.ViewModels.Credentials;
 using Platformus.Security.Data.Abstractions;
-using Platformus.Security.Data.Models;
+using Platformus.Security.Data.Entities;
 
 namespace Platformus.Security.Backend.Controllers
 {
   [Area("Backend")]
+  [Authorize(Policy = Policies.HasBrowseUsersPermission)]
   public class CredentialsController : Barebone.Backend.Controllers.ControllerBase
   {
     public CredentialsController(IStorage storage)
@@ -17,9 +19,9 @@ namespace Platformus.Security.Backend.Controllers
     {
     }
 
-    public IActionResult Index(int userId, string orderBy = "identifier", string direction = "asc", int skip = 0, int take = 10)
+    public IActionResult Index(int userId, string orderBy = "identifier", string direction = "asc", int skip = 0, int take = 10, string filter = null)
     {
-      return this.View(new IndexViewModelFactory(this).Create(userId, orderBy, direction, skip, take));
+      return this.View(new IndexViewModelFactory(this).Create(userId, orderBy, direction, skip, take, filter));
     }
 
     [HttpGet]

@@ -5,47 +5,36 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Platformus.Barebone;
-using Platformus.Forms.Data.Abstractions;
-using Platformus.Forms.Data.Models;
+using Platformus.Forms.Data.Entities;
 using Platformus.Globalization.Frontend.ViewModels;
 
 namespace Platformus.Forms.Frontend.ViewModels.Shared
 {
   public class FieldViewModelFactory : ViewModelFactoryBase
   {
-    public FieldViewModelFactory(IHandler handler)
-      : base(handler)
+    public FieldViewModelFactory(IRequestHandler requestHandler)
+      : base(requestHandler)
     {
     }
 
-    public FieldViewModel Create(Field field)
+    public FieldViewModel Create(SerializedField serializedField)
     {
-      return new FieldViewModel()
-      {
-        Id = field.Id,
-        FieldType = new FieldTypeViewModelFactory(this.handler).Create(this.handler.Storage.GetRepository<IFieldTypeRepository>().WithKey(field.FieldTypeId)),
-        Name = this.GetLocalizationValue(field.NameId),
-        FieldOptions = this.handler.Storage.GetRepository<IFieldOptionRepository>().FilteredByFieldId(field.Id).Select(
-          fi => new FieldOptionViewModelFactory(this.handler).Create(fi)
-        )
-      };
-    }
+      IEnumerable<SerializedFieldOption> cachedFieldOptions = new SerializedFieldOption[] { };
 
-    public FieldViewModel Create(CachedField cachedField)
-    {
-      IEnumerable<CachedFieldOption> cachedFieldOptions = new CachedFieldOption[] { };
-
-      if (!string.IsNullOrEmpty(cachedField.CachedFieldOptions))
-        cachedFieldOptions = JsonConvert.DeserializeObject<IEnumerable<CachedFieldOption>>(cachedField.CachedFieldOptions);
+      if (!string.IsNullOrEmpty(serializedField.SerializedFieldOptions))
+        cachedFieldOptions = JsonConvert.DeserializeObject<IEnumerable<SerializedFieldOption>>(serializedField.SerializedFieldOptions);
 
       return new FieldViewModel()
       {
-        Id = cachedField.FieldId,
-        FieldType = new FieldTypeViewModel() { Code = cachedField.FieldTypeCode },
-        Name = cachedField.Name,
+        Id = serializedField.FieldId,
+        FieldType = new FieldTypeViewModel() { Code = serializedField.FieldTypeCode },
+        Name = serializedField.Name,
+        Code = serializedField.Code,
+        IsRequired = serializedField.IsRequired,
+        MaxLength = serializedField.MaxLength,
         FieldOptions = cachedFieldOptions.Select(
-          fo => new FieldOptionViewModelFactory(this.handler).Create(fo)
-        )
+          fo => new FieldOptionViewModelFactory(this.RequestHandler).Create(fo)
+        ).ToList()
       };
     }
   }
